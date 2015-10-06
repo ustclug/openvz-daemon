@@ -12,6 +12,9 @@
 #define ROOTCACERTFILE "ca.pem"
 #define CLIENTCN "control.freeshell.ustc.edu.cn"
 
+extern int process_get(const char * url);
+
+
 static long
 get_file_size(const char *filename) {
     FILE *fp;
@@ -215,6 +218,8 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
 
     if (!is_authenticated (connection,CLIENTCN))
         return refuse_page(connection);
+    if (0 == strcmp(method, "GET"))
+        process_get(url);
 
     return secret_page(connection);
 }
@@ -238,6 +243,7 @@ main() {
     daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY | MHD_USE_SSL,
                               PORT, NULL, NULL,
                               &answer_to_connection, NULL,
+                              MHD_OPTION_THREAD_POOL_SIZE, 4,
                               MHD_OPTION_HTTPS_MEM_KEY, key_pem,
                               MHD_OPTION_HTTPS_MEM_CERT, cert_pem,
                               MHD_OPTION_HTTPS_MEM_TRUST, root_ca_pem,
