@@ -74,7 +74,7 @@ static gnutls_x509_crt_t
 get_client_certificate(gnutls_session_t tls_session) {
     unsigned int listsize;
     const gnutls_datum_t *pcert;
-    gnutls_certificate_status_t client_cert_status;
+    unsigned int client_cert_status;
     gnutls_x509_crt_t client_cert;
 
     if (tls_session == NULL)
@@ -141,7 +141,7 @@ cert_auth_get_dn(gnutls_x509_crt_t client_cert) {
  * @param connection
  * @param client_name the string that should be included in the cert DN
  *
- * @return 1 if there is a validate client cert.
+ * @return 0 if there is a validate client cert.
  */
 static int
 is_authenticated(struct MHD_Connection *connection, char *client_name) {
@@ -154,16 +154,16 @@ is_authenticated(struct MHD_Connection *connection, char *client_name) {
     tls_session = ci->tls_session;
     client_cert = get_client_certificate(tls_session);
     if(client_cert == NULL)
-        return 0;
+        return 1;
     client_dn = cert_auth_get_dn(client_cert);
     gnutls_x509_crt_deinit(client_cert);
     if(client_dn == NULL)
-        return 0;
+        return 1;
     char * pos = strstr(client_dn, client_name);
     free(client_dn);
     if (pos == NULL)
-        return 0;
-    return 1;
+        return 1;
+    return 0;
 }
 
 static int
@@ -216,7 +216,7 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
         return MHD_YES;
     }
 
-    if (!is_authenticated (connection,CLIENTCN))
+    if (0 != is_authenticated (connection,CLIENTCN))
         return refuse_page(connection);
     if (0 == strcmp(method, "GET"))
         process_get(url);
