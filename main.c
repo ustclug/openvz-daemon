@@ -242,13 +242,16 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
 
     if (0 != is_authenticated (connection,CLIENTCN))
         return unauth_page(connection);
-    json_object * json_obj;
-    if (0 == strcmp(method, "GET"))
-        json_obj = process_get(url);
-    if (NULL != json_obj) {
-        return json_res(connection, json_obj);
+    if (0 == strncmp(url, "/v1", strlen("/v1"))){
+        json_object * json_obj;
+        if (0 == strcmp(method, "GET"))
+            json_obj = process_get(url+strlen("/v1"));
+        if (NULL != json_obj) {
+            return json_res(connection, json_obj);
 
+        }
     }
+
     return secret_page(connection);
 }
 
