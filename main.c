@@ -4,6 +4,7 @@
 #include <microhttpd.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
+#include <json.h>
 
 #define PORT 8888
 
@@ -12,7 +13,7 @@
 #define ROOTCACERTFILE "ca.pem"
 #define CLIENTCN "control.freeshell.ustc.edu.cn"
 
-extern int process_get(const char * url);
+extern json_object * process_get(const char * url);
 
 
 static long
@@ -185,7 +186,7 @@ secret_page(struct MHD_Connection *connection) {
 }
 
 static int
-refuse_page(struct MHD_Connection *connection) {
+unauth_page(struct MHD_Connection *connection) {
     int ret;
     struct MHD_Response *response;
     const char *page = "<html><body>Not Authenticated.</body></html>";
@@ -203,6 +204,23 @@ refuse_page(struct MHD_Connection *connection) {
 }
 
 static int
+json_res(struct MHD_Connection *connection, json_object * obj) {
+    int ret;
+    struct MHD_Response *response;
+    const char * json_str = json_object_to_json_string(obj);
+    response =
+        MHD_create_response_from_buffer(strlen(json_str), (void *) json_str,
+                                        MHD_RESPMEM_MUST_FREE);
+    if (!response)
+        return MHD_NO;
+    MHD_add_response_header(response, "Content-Type", "application/json");
+    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    MHD_destroy_response(response);
+    return ret;
+
+}
+
+static int
 answer_to_connection(void *cls, struct MHD_Connection *connection,
                      const char *url, const char *method,
                      const char *version, const char *upload_data,
@@ -217,10 +235,13 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
     }
 
     if (0 != is_authenticated (connection,CLIENTCN))
-        return refuse_page(connection);
+        return unauth_page(connection);
+    json_object * json_obj;
     if (0 == strcmp(method, "GET"))
-        process_get(url);
-
+        json_obj = process_get(url);
+    if (NULL != json_obj) {
+        return json_res(connection, json_obj);
+    }
     return secret_page(connection);
 }
 

@@ -12,6 +12,5 @@ int run_command_block(const char * command, json_object * data,
     while(fgets(line,sizeof(line),fp)) {
         cb(line,data);
     }
-    pclose(fp);
-    return 0;
+    return pclose(fp);
 }
