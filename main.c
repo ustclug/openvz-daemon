@@ -291,6 +291,7 @@ main() {
     MHD_stop_daemon(daemon);
     free(key_pem);
     free(cert_pem);
+    free(root_ca_pem);
 
     return 0;
 }
