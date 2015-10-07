@@ -14,7 +14,7 @@ include_directories(${GNUTLS_INCLUDE_DIRS})
 pkg_search_module(JSON-C REQUIRED json-c)
 include_directories(${JSON-C_INCLUDE_DIRS})
 
-set(SOURCE_FILES main.c url_handle.c command_handle.c)
+set(SOURCE_FILES main.c url_handle.c command_handle.c utils.c)
 add_executable(openvz_daemon ${SOURCE_FILES})
 target_link_libraries(openvz_daemon ${MHD_LIBRARIES})
 target_link_libraries(openvz_daemon ${GNUTLS_LIBRARIES})
