@@ -13,8 +13,10 @@
 #define ROOTCACERTFILE "ca.pem"
 #define CLIENTCN "control.freeshell.ustc.edu.cn"
 
-extern json_object * process_get(const char * url);
+#define HOSTNAMELEN 100
 
+extern json_object * process_get(const char * url);
+static char hostname[HOSTNAMELEN];
 
 static long
 get_file_size(const char *filename) {
@@ -204,13 +206,17 @@ unauth_page(struct MHD_Connection *connection) {
 }
 
 static int
-json_res(struct MHD_Connection *connection, json_object * obj) {
+json_res(struct MHD_Connection *connection, json_object *data_obj) {
     int ret;
     struct MHD_Response *response;
+    json_object * obj = json_object_new_object();
+    json_object_object_add(obj, "host", json_object_new_string(hostname));
+    json_object_object_add(obj, "response", data_obj);
     const char * json_str = json_object_to_json_string(obj);
     response =
         MHD_create_response_from_buffer(strlen(json_str), (void *) json_str,
-                                        MHD_RESPMEM_MUST_FREE);
+                                        MHD_RESPMEM_MUST_COPY);
+    json_object_put(obj);
     if (!response)
         return MHD_NO;
     MHD_add_response_header(response, "Content-Type", "application/json");
@@ -241,6 +247,7 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
         json_obj = process_get(url);
     if (NULL != json_obj) {
         return json_res(connection, json_obj);
+
     }
     return secret_page(connection);
 }
@@ -255,6 +262,7 @@ main() {
     key_pem = load_file(SERVERKEYFILE);
     cert_pem = load_file(SERVERCERTFILE);
     root_ca_pem = load_file(ROOTCACERTFILE);
+    gethostname(hostname,HOSTNAMELEN);
 
     if ((key_pem == NULL) || (cert_pem == NULL) || root_ca_pem == NULL) {
         printf("The key/certificate files could not be read.\n");
