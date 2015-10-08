@@ -300,6 +300,9 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
     if (0 == strncmp(url, "/v1", strlen("/v1"))){
         const char * url2 = url + strlen("/v1");
         json_object *return_obj = json_object_new_object();
+        if (NULL == return_obj) {
+            return string_res(connection, "Internal Error.", MHD_HTTP_INTERNAL_SERVER_ERROR);
+        }
 
         if (0 == strcmp(method, "GET")) {
             process_get(url2, return_obj);
@@ -322,9 +325,7 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
             }
         }
 
-        if (NULL == return_obj) {
-            return string_res(connection, "Internal Error.", MHD_HTTP_INTERNAL_SERVER_ERROR);
-        } else if (json_object_object_length(return_obj) > 0) {
+        if (json_object_object_length(return_obj) > 0) {
             return json_res(connection, return_obj);
         } else {
             json_object_object_add(return_obj, "error", json_object_new_string("No results get!"));
