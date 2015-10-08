@@ -17,7 +17,7 @@
 #define BUFFERSIZE 10240
 #define POSTBUFFERSIZE  512
 
-extern json_object * process_get(const char * url);
+extern void process_get(const char * url, json_object * return_obj);
 static char hostname[HOSTNAMELEN];
 
 struct post_con_info {
@@ -264,6 +264,7 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
             return MHD_NO;
         con_info->json_string[0] = '\0';
         con_info->json_string_len = 0;
+        con_info->postprocessor = NULL;
         if (0 == strcmp(method, "POST") || 0 == strcmp(method, "PUT")) {
             con_info->postprocessor = MHD_create_post_processor(connection, POSTBUFFERSIZE,
                                                                 iterate_post, (void *)con_info);
@@ -278,10 +279,11 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
     }
 
     if (0 == strncmp(url, "/v1", strlen("/v1"))){
-        json_object * json_obj = NULL;
+        const char * url2 = url + strlen("/v1");
+        json_object *return_obj = json_object_new_object();
 
         if (0 == strcmp(method, "GET")) {
-            json_obj = process_get(url + strlen("/v1"));
+            process_get(url2, return_obj);
         } else if (0 == strcmp(method, "POST") || 0 == strcmp(method, "PUT")) {
             struct post_con_info *con_info = *con_cls;
             if (0 != *upload_data_size)
@@ -301,13 +303,17 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
             }
         }
 
-        if (NULL != json_obj) {
-            return json_res(connection, json_obj);
-
+        if (NULL == return_obj) {
+            return string_res(connection, "Internal Error.", MHD_HTTP_INTERNAL_SERVER_ERROR);
+        } else if (json_object_object_length(return_obj) > 0) {
+            return json_res(connection, return_obj);
+        } else {
+            json_object_object_add(return_obj, "error", json_object_new_string("No results get!"));
+            return json_res(connection, return_obj);
         }
     }
 
-    return string_res(connection, "A secret.", MHD_HTTP_OK);
+    return string_res(connection, "It works!", MHD_HTTP_OK);
 }
 
 int

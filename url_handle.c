@@ -45,8 +45,8 @@ static const char * status_attrs[] = {
         "diskinodes",
 };
 
-json_object *
-process_get(const char * url) {
+void
+process_get(const char * url, json_object * return_obj) {
     //printf("url:%s\n",url);
     /**
      * GET /vz
@@ -55,10 +55,12 @@ process_get(const char * url) {
     if(0 == strncmp(url, "/vz", strlen("/vz"))) {
         const char * url_end = url + strlen("/vz");
         if('\0' == *url_end || ('/' == *url_end && '\0' == *(url_end+1))) {
-            json_object *data;
-            data = json_object_new_array();
-            run_command_block("vzlist -o ctid -a -H;", data, list_process);
-            return data;
+            json_object * list_obj = json_object_new_array();
+            if(NULL == list_obj)
+                return;
+            run_command_block("vzlist -o ctid -a -H;", list_obj, list_process);
+            json_object_object_add(return_obj, "list", list_obj);
+            return;
         }
     }
     /**
@@ -68,8 +70,9 @@ process_get(const char * url) {
     if(0 == strncmp(url, "/vz/", strlen("/vz/"))) {
         int id;
         const char * url_id = url + strlen("/vz/");
-        if(NULL == url_id || *url_id < '0' || *url_id > '9')
-            return NULL;
+        if(NULL == url_id || *url_id < '0' || *url_id > '9') {
+            json_object_object_add(return_obj,"error", json_object_new_string("Can't get vz id!"));
+        }
         sscanf(url + strlen("/vz/"),"%d", &id);
 
         char config_cmd_buffer[BUFFERSIZE] = {'\0'};
@@ -82,12 +85,14 @@ process_get(const char * url) {
 
         snprintf(cmd_buffer, BUFFERSIZE, "vzlist -o %s,%s %d -H 2>&1;",
                  config_cmd_buffer,status_cmd_buffer, id);
-        json_object * data;
-        data = json_object_new_object();
-        run_command_block(cmd_buffer, data, info_process);
-        return data;
+        json_object * info_obj = json_object_new_object();
+        if (NULL == info_obj)
+            return;
+        run_command_block(cmd_buffer, info_obj, info_process);
+        json_object_object_add(return_obj, "info", info_obj);
+        return;
     }
-    return NULL;
+    json_object_object_add(return_obj,"error", json_object_new_string("URL not validated!"));
 }
 
 
