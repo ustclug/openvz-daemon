@@ -45,6 +45,11 @@ static const char * status_attrs[] = {
         "diskinodes",
 };
 
+/**
+ * All GET method is handle here.
+ *
+ * @param return_obj all result is stored to return_obj.
+ */
 void
 process_get(const char * url, json_object * return_obj) {
     //printf("url:%s\n",url);
