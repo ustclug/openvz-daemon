@@ -318,6 +318,15 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
             if (MHD_HTTP_OK != con_info->answercode) {
                 return string_res(connection, "Internal Error.", con_info->answercode);
             }
+
+            json_object * post_data_obj =
+                    json_tokener_parse(con_info->json_string);
+            if(NULL == post_data_obj) {
+                json_object_object_add(return_obj, "error",
+                                       json_object_new_string("POST/PUT data can't be parsed!"));
+                return json_res(connection, return_obj);
+            }
+
             if (0 == strcmp(method, "POST")) {
 
             }else if (0 == strcmp(method, "PUT")) {
