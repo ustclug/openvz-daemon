@@ -178,6 +178,13 @@ is_authenticated(struct MHD_Connection *connection, char *client_name) {
     return 0;
 }
 
+/**
+ * Construct the response with a simple string.
+ *
+ * @param page point to a string which is the body of response
+ *
+ * @return  MHD_YES or  MHD_NO
+ */
 static int
 string_res(struct MHD_Connection *connection, const char * page, unsigned int status_code) {
     int ret;
@@ -195,6 +202,14 @@ string_res(struct MHD_Connection *connection, const char * page, unsigned int st
     return ret;
 }
 
+/**
+ * Construct the response with a JSON object.
+ *
+ * @param data_obj point to the JSON object and it will use json_object_put.
+ *        So if it the last reference, it will be freed!
+ *
+ * @return MHD_YES or  MHD_NO
+ */
 static int
 json_res(struct MHD_Connection *connection, json_object *data_obj) {
     int ret;
@@ -216,6 +231,10 @@ json_res(struct MHD_Connection *connection, json_object *data_obj) {
 
 }
 
+/**
+ * Iterate the post data. And store the data with key "json" into con_info->json_string.
+ * The string length is no more than BUFFERSIZE-1
+ */
 static int
 iterate_post (void *cls, enum MHD_ValueKind kind, const char *key,
               const char *filename, const char *content_type,
