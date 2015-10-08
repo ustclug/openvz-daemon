@@ -14,9 +14,18 @@
 #define CLIENTCN "control.freeshell.ustc.edu.cn"
 
 #define HOSTNAMELEN 100
+#define BUFFERSIZE 10240
+#define POSTBUFFERSIZE  512
 
 extern json_object * process_get(const char * url);
 static char hostname[HOSTNAMELEN];
+
+struct post_con_info {
+    struct MHD_PostProcessor *postprocessor;
+    char json_string[BUFFERSIZE];
+    int json_string_len;
+    unsigned int answercode;
+};
 
 static long
 get_file_size(const char *filename) {
@@ -170,36 +179,17 @@ is_authenticated(struct MHD_Connection *connection, char *client_name) {
 }
 
 static int
-secret_page(struct MHD_Connection *connection) {
+string_res(struct MHD_Connection *connection, const char * page, unsigned int status_code) {
     int ret;
     struct MHD_Response *response;
-    const char *page = "<html><body>A secret.</body></html>";
 
     response =
             MHD_create_response_from_buffer(strlen(page), (void *) page,
-                                            MHD_RESPMEM_PERSISTENT);
+                                            MHD_RESPMEM_MUST_COPY);
     if (!response)
         return MHD_NO;
 
-    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-    MHD_destroy_response(response);
-
-    return ret;
-}
-
-static int
-unauth_page(struct MHD_Connection *connection) {
-    int ret;
-    struct MHD_Response *response;
-    const char *page = "<html><body>Not Authenticated.</body></html>";
-
-    response =
-            MHD_create_response_from_buffer(strlen(page), (void *) page,
-                                            MHD_RESPMEM_PERSISTENT);
-    if (!response)
-        return MHD_NO;
-
-    ret = MHD_queue_response(connection, MHD_HTTP_UNAUTHORIZED, response);
+    ret = MHD_queue_response(connection, status_code, response);
     MHD_destroy_response(response);
 
     return ret;
@@ -227,32 +217,97 @@ json_res(struct MHD_Connection *connection, json_object *data_obj) {
 }
 
 static int
+iterate_post (void *cls, enum MHD_ValueKind kind, const char *key,
+              const char *filename, const char *content_type,
+              const char *transfer_encoding, const char *data, uint64_t off, size_t size) {
+    if (0 != strcmp (key, "json"))
+        return MHD_NO;
+    struct post_con_info * con_info = cls;
+    con_info->answercode = MHD_HTTP_INTERNAL_SERVER_ERROR;
+    if (size + con_info->json_string_len > BUFFERSIZE - 1) {
+        return MHD_NO;
+    }
+    strncat(con_info->json_string, data, size);
+    con_info->json_string_len += size;
+    con_info->answercode = MHD_HTTP_OK;
+    return MHD_YES;
+}
+
+static void
+request_completed (void *cls, struct MHD_Connection *connection,
+                   void **con_cls, enum MHD_RequestTerminationCode toe)
+{
+    struct post_con_info *con_info = *con_cls;
+
+    if (NULL == con_info)
+        return;
+    if (NULL != con_info->postprocessor)
+        MHD_destroy_post_processor(con_info->postprocessor);
+    free (con_info);
+    *con_cls = NULL;
+}
+
+static int
 answer_to_connection(void *cls, struct MHD_Connection *connection,
                      const char *url, const char *method,
                      const char *version, const char *upload_data,
                      size_t *upload_data_size, void **con_cls) {
 
+    if (0 != is_authenticated (connection,CLIENTCN))
+        return string_res(connection, "Not Authenticated", MHD_HTTP_UNAUTHORIZED);
 
-    if (0 != strcmp(method, "GET"))
-        return MHD_NO;
     if (NULL == *con_cls) {
-        *con_cls = connection;
+        struct post_con_info * con_info;
+        con_info = malloc(sizeof(struct post_con_info));
+        // allocate memory failed
+        if (NULL == con_info)
+            return MHD_NO;
+        con_info->json_string[0] = '\0';
+        con_info->json_string_len = 0;
+        if (0 == strcmp(method, "POST") || 0 == strcmp(method, "PUT")) {
+            con_info->postprocessor = MHD_create_post_processor(connection, POSTBUFFERSIZE,
+                                                                iterate_post, (void *)con_info);
+            if (NULL == con_info->postprocessor)
+            {
+                free (con_info);
+                return MHD_NO;
+            }
+        }
+        *con_cls = (void *) con_info;
         return MHD_YES;
     }
 
-    if (0 != is_authenticated (connection,CLIENTCN))
-        return unauth_page(connection);
     if (0 == strncmp(url, "/v1", strlen("/v1"))){
-        json_object * json_obj;
-        if (0 == strcmp(method, "GET"))
-            json_obj = process_get(url+strlen("/v1"));
+        json_object * json_obj = NULL;
+
+        if (0 == strcmp(method, "GET")) {
+            json_obj = process_get(url + strlen("/v1"));
+        } else if (0 == strcmp(method, "POST") || 0 == strcmp(method, "PUT")) {
+            struct post_con_info *con_info = *con_cls;
+            if (0 != *upload_data_size)
+            {
+                MHD_post_process (con_info->postprocessor, upload_data,
+                                  *upload_data_size);
+                *upload_data_size = 0;
+                return MHD_YES;
+            }
+            if (MHD_HTTP_OK != con_info->answercode) {
+                return string_res(connection, "Internal Error.", con_info->answercode);
+            }
+            if (0 == strcmp(method, "POST")) {
+
+            }else if (0 == strcmp(method, "PUT")) {
+
+            }
+        }
+
         if (NULL != json_obj) {
             return json_res(connection, json_obj);
 
         }
     }
 
-    return secret_page(connection);
+    return string_res(connection, "A secret.", MHD_HTTP_OK);
 }
 
 int
@@ -279,12 +334,14 @@ main() {
                               MHD_OPTION_HTTPS_MEM_KEY, key_pem,
                               MHD_OPTION_HTTPS_MEM_CERT, cert_pem,
                               MHD_OPTION_HTTPS_MEM_TRUST, root_ca_pem,
+                              MHD_OPTION_NOTIFY_COMPLETED, request_completed, NULL,
                               MHD_OPTION_END);
     if (NULL == daemon) {
-        printf("%s\n", cert_pem);
+        printf("Failed to start daemon\n");
 
         free(key_pem);
         free(cert_pem);
+        free(root_ca_pem);
 
         return 1;
     }
