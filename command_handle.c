@@ -10,9 +10,11 @@ int run_command_block(const char * command, json_object * data,
     if(fp == NULL)
         return 1;
     int line_no = 0;
-    while(fgets(line,sizeof(line),fp)) {
-        cb(line,line_no,data);
-        line_no++;
+    if (NULL != cb) {
+        while(fgets(line,sizeof(line),fp)) {
+            cb(line,line_no,data);
+            line_no++;
+        }
     }
     return pclose(fp);
 }
