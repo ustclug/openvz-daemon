@@ -32,7 +32,7 @@ int run_command_nonblock(const char * execute, char * const args[]) {
 
     if (pid1 > 0) {
         /* parent process A */
-        waitpid(pid1, &status, NULL);
+        waitpid(pid1, &status, WNOHANG);
     } else if (0 == pid1) {
         /* child process B */
         pid_t pid2 = fork();
