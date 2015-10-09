@@ -37,7 +37,7 @@ openssl x509 -req -in client.req -CA CA.pem -CAkey privkey.pem -CAserial file.sr
 ```
 
 ```bash
-# cerver start
+# server start
 ./openvz_daemon
 
 # client test
