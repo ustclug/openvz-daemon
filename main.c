@@ -346,8 +346,34 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
 }
 
 int
-main() {
-    struct MHD_Daemon *daemon;
+main(int argc, char* argv[]) {
+    int run_in_background = 0, opt;
+    while((opt=getopt(argc, argv, "d")) != -1) {
+        switch (opt) {
+            case 'd':
+                run_in_background = 1;
+                break;
+            default:
+                break;
+        }
+    }
+    if(1 == run_in_background) {
+        pid_t pid = fork();
+        if(pid > 0) {
+            _exit(0);
+        } else if(pid < 0) {
+            _exit(1);
+        } else {
+            pid_t sid = setsid();
+            if(sid < 0)
+                _exit(1);
+            close(STDIN_FILENO);
+            close(STDOUT_FILENO);
+            close(STDERR_FILENO);
+        }
+    }
+
+    struct MHD_Daemon *server_daemon;
     char *key_pem;
     char *cert_pem;
     char *root_ca_pem;
@@ -362,7 +388,7 @@ main() {
         return 1;
     }
 
-    daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY | MHD_USE_SSL,
+    server_daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY | MHD_USE_SSL,
                               PORT, NULL, NULL,
                               &answer_to_connection, NULL,
                               MHD_OPTION_THREAD_POOL_SIZE, 4,
@@ -371,7 +397,7 @@ main() {
                               MHD_OPTION_HTTPS_MEM_TRUST, root_ca_pem,
                               MHD_OPTION_NOTIFY_COMPLETED, request_completed, NULL,
                               MHD_OPTION_END);
-    if (NULL == daemon) {
+    if (NULL == server_daemon) {
         printf("Failed to start daemon\n");
 
         free(key_pem);
@@ -381,9 +407,12 @@ main() {
         return 1;
     }
 
-    getchar();
+    while(1) sleep(1000);
 
-    MHD_stop_daemon(daemon);
+    /**
+     * Resources will be freed by OS.
+     */
+    MHD_stop_daemon(server_daemon);
     free(key_pem);
     free(cert_pem);
     free(root_ca_pem);
