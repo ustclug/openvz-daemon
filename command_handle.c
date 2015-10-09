@@ -25,7 +25,6 @@ int run_command_block(const char * command, json_object * data,
  * @param args normally args[0] is same to execute and the last element should be NULL.
  */
 int run_command_nonblock(const char * execute, char * const args[]) {
-    printf("We are in run_command_nonblock\n");
     int status = 0;
     int error = 0;
 
@@ -37,7 +36,6 @@ int run_command_nonblock(const char * execute, char * const args[]) {
     } else if (0 == pid1) {
         /* child process B */
         pid_t pid2 = fork();
-        printf("pid2: %d\n",pid2);
         if (pid2 > 0) {
             exit(0);
         } else if (0 == pid2) {
@@ -49,6 +47,5 @@ int run_command_nonblock(const char * execute, char * const args[]) {
     } else {
         error = 1;
     }
-    printf("pid1: %d\n",pid1);
     return error || status;
 }
