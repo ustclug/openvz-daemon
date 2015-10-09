@@ -22,7 +22,7 @@ int run_command_block(const char * command, json_object * data,
 
 /**
  * @param execute
- * @param args normally args[0] is same to execute.
+ * @param args normally args[0] is same to execute and the last element should be NULL.
  */
 int run_command_nonblock(const char * execute, char * const args[]) {
     printf("We are in run_command_nonblock\n");
