@@ -1,0 +1,19 @@
+sudo: required
+dist: trusty
+
+language: c
+
+addons:
+    apt:
+        packages:
+        - libmicrohttpd-dev
+        - libgnutls-dev
+        - libjson-c-dev
+
+before_script:
+    - mkdir build
+    - cd build
+    - cmake ..
+
+script:
+    - make
