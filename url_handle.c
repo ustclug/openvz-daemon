@@ -6,7 +6,7 @@
 
 extern int run_command_block(const char * command, json_object * data,
                              void (*cb)(const char * line, int line_no, json_object * cb_data));
-extern int run_command_nonblock(const char * execute, char * const args[]);
+extern int run_command_nonblock(const char * execute, char * const args[], pid_t * pid_task);
 extern char * str_multi_cat(char * dest, const char ** src, size_t len, size_t n, char split);
 
 

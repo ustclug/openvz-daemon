@@ -1,4 +1,5 @@
 #include <sys/wait.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <json.h>
@@ -26,19 +27,27 @@ int run_command_block(const char * command, json_object * data,
  * @param execute
  * @param args normally args[0] is same to execute and the last element should be NULL.
  */
-int run_command_nonblock(const char * execute, char * const args[]) {
+int run_command_nonblock(const char * execute, char * const args[], pid_t * pid_task) {
     int status = 0;
     int error = 0;
+    const char * shm_mame = "openvz-daemon-task-pid";
+    int shm_fd = shm_open(shm_mame, O_CREAT | O_TRUNC | O_RDWR, S_IRUSR|S_IWUSR);
+    ftruncate(shm_fd, sizeof(pid_t));
+    pid_t * shm = (pid_t *)mmap(NULL, sizeof(pid_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 
     pid_t pid1 = fork();
 
     if (pid1 > 0) {
         /* parent process A */
         waitpid(pid1, &status, 0);
+        *pid_task = *shm;
+        shm_unlink(shm_mame);
+        munmap(shm, sizeof(pid_t));
     } else if (0 == pid1) {
         /* child process B */
         pid_t pid2 = fork();
         if (pid2 > 0) {
+            *shm = pid2;
             exit(0);
         } else if (0 == pid2) {
             pid_t pid3 = getpid();
