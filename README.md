@@ -1,4 +1,6 @@
 # openvz-daemon
+[![Build Status](https://travis-ci.org/ustclug/openvz-daemon.svg?branch=master)]
+(https://travis-ci.org/ustclug/openvz-daemon)
 
 ## Dependency
 
