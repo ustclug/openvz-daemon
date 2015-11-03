@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <json.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 #define BUFFERSIZE 1024
 int run_command_block(const char * command, json_object * data,
@@ -28,6 +29,8 @@ int run_command_block(const char * command, json_object * data,
  * @param args normally args[0] is same to execute and the last element should be NULL.
  */
 int run_command_nonblock(const char * execute, char * const args[], pid_t * pid_task) {
+    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock(&mutex);
     int status = 0;
     int error = 0;
     const char * shm_mame = "openvz-daemon-task-pid";
@@ -69,5 +72,6 @@ int run_command_nonblock(const char * execute, char * const args[], pid_t * pid_
     } else {
         error = 1;
     }
+    pthread_mutex_unlock(&mutex);
     return error || status;
 }
