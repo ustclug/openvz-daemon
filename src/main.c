@@ -6,11 +6,6 @@
 #include <gnutls/x509.h>
 #include <json.h>
 
-#define PORT 8888
-
-#define SERVERKEYFILE "server.key"
-#define SERVERCERTFILE "server.pem"
-#define ROOTCACERTFILE "ca.pem"
 #define CLIENTCN "control.freeshell.ustc.edu.cn"
 
 #define HOSTNAMELEN 100
@@ -348,15 +343,42 @@ answer_to_connection(void *cls, struct MHD_Connection *connection,
 int
 main(int argc, char* argv[]) {
     int run_in_background = 0, opt;
-    while((opt=getopt(argc, argv, "d")) != -1) {
+    int find_key = 0, find_cert = 0, find_root = 0;
+    int port = 8888;
+    char key_pem_file[BUFFERSIZE], cert_pem_file[BUFFERSIZE], ca_pem_file[BUFFERSIZE];
+    while((opt=getopt(argc, argv, "dk:c:r:p:h")) != -1) {
         switch (opt) {
             case 'd':
                 run_in_background = 1;
                 break;
+            case 'k':
+                snprintf(key_pem_file, BUFFERSIZE, "%s", optarg);
+                find_key = 1;
+                break;
+            case 'c':
+                snprintf(cert_pem_file, BUFFERSIZE, "%s", optarg);
+                find_cert = 1;
+                break;
+            case 'r':
+                snprintf(ca_pem_file, BUFFERSIZE, "%s", optarg);
+                find_root = 1;
+                break;
+            case 'p':
+                port = atoi(optarg);
+                break;
+            case 'h':
+                fprintf(stderr, "Usage: %s [-d] [-k key] [-c cert] [-r root_ca] [-p port]\n",
+                        argv[0]);
+                return 0;
             default:
                 break;
         }
     }
+
+    if(0 == find_key) snprintf(key_pem_file, BUFFERSIZE, "%s", "server.key");
+    if(0 == find_cert) snprintf(cert_pem_file, BUFFERSIZE, "%s", "server.pem");
+    if(0 == find_root) snprintf(ca_pem_file, BUFFERSIZE, "%s", "ca.pem");
+
     if(1 == run_in_background) {
         pid_t pid = fork();
         if(pid > 0) {
@@ -378,18 +400,18 @@ main(int argc, char* argv[]) {
     char *cert_pem;
     char *root_ca_pem;
 
-    key_pem = load_file(SERVERKEYFILE);
-    cert_pem = load_file(SERVERCERTFILE);
-    root_ca_pem = load_file(ROOTCACERTFILE);
+    key_pem = load_file(key_pem_file);
+    cert_pem = load_file(cert_pem_file);
+    root_ca_pem = load_file(ca_pem_file);
     gethostname(hostname,HOSTNAMELEN);
 
     if ((key_pem == NULL) || (cert_pem == NULL) || root_ca_pem == NULL) {
-        printf("The key/certificate files could not be read.\n");
+        fprintf(stderr,"The key/certificate files could not be read.\n");
         return 1;
     }
 
     server_daemon = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY | MHD_USE_SSL,
-                              PORT, NULL, NULL,
+                              port, NULL, NULL,
                               &answer_to_connection, NULL,
                               MHD_OPTION_THREAD_POOL_SIZE, 4,
                               MHD_OPTION_HTTPS_MEM_KEY, key_pem,
