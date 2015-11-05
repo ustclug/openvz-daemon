@@ -1,6 +1,6 @@
 # API
 
-We design it according to [LXD Rest API](https://github.com/lxc/lxd/blob/master/specs/rest-api.md)
+We design it according to [LXD REST API](https://github.com/lxc/lxd/blob/master/specs/rest-api.md)
 
 ## Return
 
@@ -14,6 +14,7 @@ HTTP code is set to 200.
     'status': "success",
     'status_code': 200,
     'metadata': {}
+}
 ```
 
 ### Background operation
