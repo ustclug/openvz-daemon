@@ -51,10 +51,62 @@ curl --cacert ca.pem --cert client.pem --key client.key https://localhost:8888/
 
 ### Overview
 
-URL           | GET           | POST          | PUT           | DELETE        |
-------------- | ------------- | ------------- | ------------- | ------------- |
-/v1/vz        | ☑list vz ids  |               |               |               |
-/v1/vz/\<id\> | ☑get info     | ☐create       | ☐set parameter| ☐delete       |
-/v1/control/\<id\> |          | ☐control a vz |               |               |
+#### shells
+* [x] `GET` /v1/shells
+    * @des: list all freeshell ids
+    * @ret: 200 Success
+    * @ret: 400 Bad Request
+    * @ret: 403 Unauthorized access
+* [ ] `POST` /v1/shells
+    * @des: create a new freeshell and return its id
+    * @para: `unimplemented`
+    * @ret: 200 Success
+    * @ret: 400 Bad Request
+    * @ret: 403 Unauthorized access
+* [ ] `GET` /v1/shells/{id}
+    * @des: get all info about the freeshell with id {id}
+    * @ret: 200 Success
+    * @ret: 400 Bad Request
+    * @ret: 403 Unauthorized access
+    * @ret: 404 Not found
+* [ ] `PUT` /v1/shells/{id}
+    * @des: update the info about freeshell with id {id}
+    * @ret: 200 Success
+    * @ret: 400 Bad Request
+    * @ret: 403 Unauthorized access
+    * @ret: 404 Not found
+* [ ] `DELETE` /v1/shells/{id}
+    * @des: delete a freeshell
+    * @ret: 200 Success
+    * @ret: 400 Bad Request
+    * @ret: 403 Unauthorized access
+    * @ret: 404 Not found
 
-* control: start,stop,reboot,reinstall
+#### control
+* [ ] `PUT` /v1/control/{id}/start
+    * @des: start
+    * @ret: 200 Success
+    * @ret: 400 Bad Request
+    * @ret: 403 Unauthorized access
+    * @ret: 404 Not found
+* [ ] `PUT` /v1/control/{id}/stop
+    * @des: stop
+    * @ret: 200 Success
+    * @ret: 400 Bad Request
+    * @ret: 403 Unauthorized access
+    * @ret: 404 Not found
+* [ ] `PUT` /v1/control/{id}/reboot
+    * @des: reboot
+    * @ret: 200 Success
+    * @ret: 400 Bad Request
+    * @ret: 403 Unauthorized access
+    * @ret: 404 Not found
+* [ ] `PUT` /v1/control/{id}/reinstall
+    * @des: reinstall
+    * @para: `unimplemented`
+    * @ret: 200 Success
+    * @ret: 400 Bad Request
+    * @ret: 403 Unauthorized access
+    * @ret: 404 Not found
+
+#### others
