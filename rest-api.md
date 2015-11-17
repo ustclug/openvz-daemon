@@ -78,9 +78,9 @@ Code  | Meaning
         * [/1.0/vz/\<id\>](#10-vz-id)
             * [/1.0/vz/\<id\>/state](#10-vz-id-state)
 
-## <a name="10-vz"></a> /1.0/vz
+### <a name="10-vz"></a> /1.0/vz
 
-### GET
+#### GET
 
 * Description: list of containers
 * Authentication: trusted
@@ -92,9 +92,9 @@ Output:
 [101, 102]
 ```
 
-## <a name="10-vz-id"></a> /1.0/vz/\<id\>
+### <a name="10-vz-id"></a> /1.0/vz/\<id\>
 
-### GET
+#### GET
 * Description: container information
 * Authentication: trusted
 * Operation: sync
@@ -120,7 +120,7 @@ Output:
 }
 ```
 
-### POST
+#### POST
 * Description: Create a new container
 * Authentication: trusted
 * Operation: async
@@ -144,7 +144,7 @@ Input:
 }
 ```
 
-### PUT
+#### PUT
 * Description: update container configuration or restore snapshot
 * Authentication: trusted
 * Operation: async
@@ -155,7 +155,7 @@ Input (update container configuration):
 Takes the same structure as that returned by GET but doesn't allow name changes (see POST below)
 or changes to the status sub-dict (since that's read-only).
 
-### DELETE
+#### DELETE
 * Description: remove the container
 * Authentication: trusted
 * Operation: async
@@ -163,9 +163,9 @@ or changes to the status sub-dict (since that's read-only).
 
 Input (none at present)
 
-## <a name="10-vz-id-state"></a> /1.0/vz/\<id\>/state
+### <a name="10-vz-id-state"></a> /1.0/vz/\<id\>/state
 
-### GET
+#### GET
 
 * Description: current state
 * Authentication: trusted
@@ -177,7 +177,7 @@ Output:
 { "status": "Running", "status_code": 103  }
 ```
 
-### PUT
+#### PUT
 
 * Description: change the container state
 * Authentication: trusted
