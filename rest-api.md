@@ -49,6 +49,28 @@ HTTP code is set to 400, 401, 403, 404, 409, 412 or 500.
 }
 ```
 
+## Status Codes
+
+### List of current status codes
+
+Code  | Meaning
+:---  | :------
+100   | OK
+101   | Started
+102   | Stopped
+103   | Running
+104   | Cancelling
+105   | Pending
+106   | Starting
+107   | Stopping
+108   | Aborting
+109   | Freezing
+110   | Frozen
+111   | Thawed
+200   | Success
+400   | Failure
+401   | Cancelled
+
 ## Structure
 
 * /1.0
