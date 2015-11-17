@@ -60,11 +60,20 @@ HTTP code is set to 400, 401, 403, 404, 409, 412 or 500.
 
 ### GET
 
+* Description: list of containers
+* Authentication: trusted
+* Operation: sync
+* Return: list of vz containers' id.
+
+Output:
+```json
+[101, 102]
+```
 
 ## <a name="10-vz-id"></a> /1.0/vz/\<id\>
 
 ### GET
-* Description: Container information
+* Description: container information
 * Authentication: trusted
 * Operation: sync
 * Return: dict of the container configuration and current state.
@@ -73,19 +82,19 @@ Output:
 ```json
 {
     "hostname": "my-container",
-    "config": {"limits.cpus": "3"},
+    "config": {
+        "limits.cpus": "3",
+        "disk_space": "5GB",
+        "memory": "4GB",
+        "ip_address": "10.xx.x.xxx"
+    },
     "status": {
-                "status": "Running",
-                "status_code": 103,
-                "machine": [{
-                    "disk_space": "5GB",
-                    "disk_usage": "3GB",
-                    "memory": "4GB",
-                    "free_memory": "2GB",
-                    "cpu_load": "20%",
-                    "ip_address": "10.xx.x.xxx"
-                }]
-              }
+        "status": "Running",
+        "status_code": 103,
+        "disk_usage": "3GB",
+        "free_memory": "2GB",
+        "cpu_load": "20%",
+    }
 }
 ```
 
@@ -98,14 +107,18 @@ Output:
 Input:
 ```json
 {
-    "hostname": "my-new-container",                                         # 64 chars max, ASCII, no slash, no colon and no comma
-    "config": {"limits.cpus": "2"},                                     # Config override.
-    "source": {"type": "image",                                         # Can be: "image", "migration", "copy" or "none"
-               "properties": {                                          # Properties
-                    "os": "ubuntu",
-                    "release": "14.04",
-                    "architecture": "x86_64"
-                }}
+    "hostname": "my-new-container",                 # 64 chars max, ASCII, no slash, no colon and no comma
+    "config": {
+        "limits.cpus": "2"                          # Config override.
+    },
+    "source": {
+        "type": "image",                            # Can be: "image", "migration", "copy" or "none"
+        "properties": {                             # Properties
+            "os": "ubuntu",
+            "release": "14.04",
+            "architecture": "x86_64"
+        }
+    }
 }
 ```
 
@@ -117,7 +130,8 @@ Input:
 
 Input (update container configuration):
 
-Takes the same structure as that returned by GET but doesn't allow name changes (see POST below) or changes to the status sub-dict (since that"s read-only).
+Takes the same structure as that returned by GET but doesn't allow name changes (see POST below)
+or changes to the status sub-dict (since that's read-only).
 
 ### DELETE
 * Description: remove the container
@@ -125,17 +139,35 @@ Takes the same structure as that returned by GET but doesn't allow name changes 
 * Operation: async
 * Return: background operation or standard error
 
-Input (none at present):
-
-```json
-{
-}
-```
-
-HTTP code for this should be 202 (Accepted).
+Input (none at present)
 
 ## <a name="10-vz-id-state"></a> /1.0/vz/\<id\>/state
 
 ### GET
 
+* Description: current state
+* Authentication: trusted
+* Operation: sync
+* Return: dict representing current state
+
+Output:
+```json
+{ "status": "Running", "status_code": 103  }
+```
+
 ### PUT
+
+* Description: change the container state
+* Authentication: trusted
+* Operation: async
+* Return: background operation or standard error
+
+Input:
+```json
+{
+    "action": "stop",       # State change action (stop, start, restart, freeze or unfreeze)
+    "timeout": 30,          # A timeout after which the state change is considered as failed
+    "force": true           # Force the state change (currently only valid for stop and restart where it means killing the container)
+
+}
+```
