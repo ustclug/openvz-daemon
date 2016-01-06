@@ -28,9 +28,9 @@ Location HTTP header is set to the operation URL.
     "type": "async",
     "status": "ok",
     "status_code": 100,
-    "operation": "/1.0/vz/<id>",          # URL to the background operation
+    "operation": "/v1/operations/:uuid",          # URL to the background operation
     "resources": {
-        "containers": ["/1.0/vz/id"]      # List of affected resources
+        "containers": ["/v1/containers/:id"]      # List of affected resources
     },
     "metadata": {}                        # Metadata relevant to the operation
 }
@@ -74,11 +74,11 @@ Code  | Meaning
 ## Structure
 
 * /1.0
-    * [/1.0/vz](#10-vz)
-        * [/1.0/vz/\<id\>](#10-vz-id)
-            * [/1.0/vz/\<id\>/state](#10-vz-id-state)
+    * [/v1/containers](#10-vz)
+        * [/v1/containers/\<id\>](#10-vz-id)
+            * [/v1/containers/\<id\>/state](#10-vz-id-state)
 
-### <a name="10-vz"></a> /1.0/vz
+### <a name="10-vz"></a> /v1/containers
 
 #### GET
 
@@ -92,7 +92,7 @@ Output:
 [101, 102]
 ```
 
-### <a name="10-vz-id"></a> /1.0/vz/\<id\>
+### <a name="10-vz-id"></a> /v1/containers/\<id\>
 
 #### GET
 * Description: container information
@@ -105,17 +105,18 @@ Output:
 {
     "hostname": "my-container",
     "config": {
-        "limits.cpus": "3",
-        "disk_space": "5GB",
-        "memory": "4GB",
-        "ip_address": "10.xx.x.xxx"
+        "cpulimit": "0",
+        "diskspace": "10485760", # KB
+        "memspace": "922337203",
+        "ip": "10.xx.x.xxx"
     },
     "status": {
-        "status": "Running",
-        "status_code": 103,
-        "disk_usage": "3GB",
-        "free_memory": "2GB",
-        "cpu_load": "20%",
+        "status": "running",
+        "numproc": "12",
+        "status_code": "103",
+        "diskusage": "0",
+        "memusage": "11059200",
+        "load_average": "0.00/0.01/0.05",       # last 1 min / 5 min / 15 min
     }
 }
 ```
@@ -131,14 +132,15 @@ Input:
 {
     "hostname": "my-new-container",                 # 64 chars max, ASCII, no slash, no colon and no comma
     "config": {
-        "limits.cpus": "2"                          # Config override.
+        "userpasswd": "foo:bar"                          # Config override.
+        "diskspace": "20971520"                          # Config override.
     },
     "source": {
-        "type": "image",                            # Can be: "image", "migration", "copy" or "none"
+        "type": "new",                            # Can be: "new", "migration", "copy"
         "properties": {                             # Properties
             "os": "ubuntu",
             "release": "14.04",
-            "architecture": "x86_64"
+            "arch": "x86_64"
         }
     }
 }
@@ -163,7 +165,7 @@ or changes to the status sub-dict (since that's read-only).
 
 Input (none at present)
 
-### <a name="10-vz-id-state"></a> /1.0/vz/\<id\>/state
+### <a name="10-vz-id-state"></a> /v1/containers/\<id\>/state
 
 #### GET
 
@@ -174,7 +176,7 @@ Input (none at present)
 
 Output:
 ```json
-{ "status": "Running", "status_code": 103  }
+{ "status": "running", "status_code": 103  }
 ```
 
 #### PUT
@@ -189,7 +191,7 @@ Input:
 {
     "action": "stop",       # State change action (stop, start, restart, freeze or unfreeze)
     "timeout": 30,          # A timeout after which the state change is considered as failed
-    "force": true           # Force the state change (currently only valid for stop and restart where it means killing the container)
+    "force": false           # Force the state change (currently only valid for stop and restart where it means killing the container)
 
 }
 ```
