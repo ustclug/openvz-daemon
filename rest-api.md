@@ -8,7 +8,7 @@ We design it according to [LXD REST API](https://github.com/lxc/lxd/blob/master/
 
 HTTP code is set to 200.
 
-```json
+```
 {
     "type": "sync",
     "status": "success",
@@ -23,7 +23,7 @@ HTTP code is set to 202.
 
 Location HTTP header is set to the operation URL.
 
-```json
+```
 {
     "type": "async",
     "status": "ok",
@@ -40,7 +40,7 @@ Location HTTP header is set to the operation URL.
 
 HTTP code is set to 400, 401, 403, 404, 409, 412 or 500.
 
-```json
+```
 {
     "type": "error",
     "error": "failure",
@@ -88,8 +88,8 @@ Code  | Meaning
 * Return: list of vz containers' id.
 
 Output:
-```json
-[101, 102]
+```
+["101", "102"]
 ```
 
 ### <a name="10-vz-id"></a> /v1/containers/\<id\>
@@ -101,7 +101,7 @@ Output:
 * Return: dict of the container configuration and current state.
 
 Output:
-```json
+```
 {
     "hostname": "my-container",
     "config": {
@@ -128,11 +128,11 @@ Output:
 * Return: background operation or standard error
 
 Input:
-```json
+```
 {
     "hostname": "my-new-container",                 # 64 chars max, ASCII, no slash, no colon and no comma
     "config": {
-        "userpasswd": "foo:bar"                          # Config override.
+        "userpasswd": "foo:bar",                          # Config override.
         "diskspace": "20971520"                          # Config override.
     },
     "source": {
@@ -175,7 +175,8 @@ Input (none at present)
 * Return: dict representing current state
 
 Output:
-```json
+
+```
 { "status": "running", "status_code": 103  }
 ```
 
@@ -187,7 +188,7 @@ Output:
 * Return: background operation or standard error
 
 Input:
-```json
+```
 {
     "action": "stop",       # State change action (stop, start, restart, freeze or unfreeze)
     "timeout": 30,          # A timeout after which the state change is considered as failed
